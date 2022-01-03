@@ -1,10 +1,5 @@
 # Redis on Kubernetes
 
-Create a cluster with [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
-
-```
-kind create cluster --name redis --image kindest/node:v1.18.4
-```
 
 ## Namespace
 
@@ -12,18 +7,11 @@ kind create cluster --name redis --image kindest/node:v1.18.4
 kubectl create ns redis
 ```
 
-## Storage Class
 
-```
-kubectl get storageclass
-NAME                 PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-standard (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  84s
-```
 
 ## Deployment: Redis nodes
 
 ```
-cd storage/redis/kubernetes/
 kubectl apply -n redis -f ./redis/redis-configmap.yaml
 kubectl apply -n redis -f ./redis/redis-statefulset.yaml
 
@@ -42,13 +30,11 @@ kubectl -n redis exec -it redis-0 sh
 redis-cli 
 auth a-very-complex-password-here
 info replication
-redis-cli --no-auth-warning --raw -h redis-0.redis.redis.svc.cluster.local -a  a-very-complex-password-here info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2
 ```
 
 ## Deployment: Redis Sentinel (3 instances)
 
 ```
-cd storage/redis/kubernetes/
 kubectl apply -n redis -f ./sentinel/sentinel-statefulset.yaml
 
 kubectl -n redis get pods
