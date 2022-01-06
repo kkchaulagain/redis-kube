@@ -14,6 +14,7 @@ kubectl create ns redis
 ```
 kubectl apply -n redis -f ./redis/redis-configmap.yaml
 kubectl apply -n redis -f ./redis/redis-statefulset.yaml
+kubectl delete -n redis -f ./redis/redis-statefulset.yaml
 
 kubectl -n redis get pods
 kubectl -n redis get pv
@@ -36,6 +37,7 @@ info replication
 
 ```
 kubectl apply -n redis -f ./sentinel/sentinel-statefulset.yaml
+kubectl delete -n redis -f ./sentinel/sentinel-statefulset.yaml
 
 kubectl -n redis get pods
 kubectl -n redis get pv

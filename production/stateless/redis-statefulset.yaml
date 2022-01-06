@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  serviceName: redis
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      initContainers:
+        - name: config
+          image: redislabs/redisearch:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              cp /tmp/redis/redis.conf /etc/redis/redis.conf
+
+              echo "finding master..."
+              MASTER_FDQN=`hostname  -f | sed -e 's/redis-[0-9]\./redis-0./'`
+              if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
+                echo "master not found, defaulting to redis-0"
+
+                if [ "$(hostname)" = "redis-0" ]; then
+                  echo "this is redis-0, not updating config..."
+                else
+                  echo "updating redis.conf..."
+                  echo "slaveof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+                fi
+              else
+                echo "sentinel found, finding master"
+                MASTER="$(redis-cli -h sentinel -p 5000 sentinel get-master-addr-by-name mymaster | grep redis-)"
+                if [ "$MASTER" = "" ]; then
+                  echo "master not found, defaulting to redis-0"
+                  if [ "$(hostname)" = "redis-0" ]; then
+                    echo "this is redis-0, not updating config..."
+                  else
+                    echo "updating redis.conf..."
+                    echo "slaveof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+                  fi
+                else
+                  echo "found $MASTER"
+                  if [ "$(hostname -f)" = $MASTER ]; then
+                    echo "this is master, not updating config..."
+                  else
+                    echo "master found, updating config..."
+                    echo "slaveof $MASTER 6379" >> /etc/redis/redis.conf
+                  fi
+                fi
+              fi
+              if [ "$(hostname)" = "redis-0" ]; then
+                echo "replica-announce-ip 134.209.128.75" >> /etc/redis/redis.conf
+              fi
+              if [ "$(hostname)" = "redis-1" ]; then
+                echo "replica-announce-ip 143.244.200.107" >> /etc/redis/redis.conf
+              fi
+              if [ "$(hostname)" = "redis-2" ]; then
+                echo "replica-announce-ip 206.189.255.153" >> /etc/redis/redis.conf
+              fi
+              echo "loadmodule /usr/lib/redis/modules/redisearch.so" >> /etc/redis/redis.conf
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/redis/
+            - name: config
+              mountPath: /tmp/redis/
+      containers:
+        - name: redis
+          image: redislabs/redisearch:latest
+          command: ["redis-server"]
+          args: ["/etc/redis/redis.conf"]
+          ports:
+            - containerPort: 6379
+              name: redis
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: redis-config
+              mountPath: /etc/redis/
+      volumes:
+        - name: redis-config
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: redis-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: do-block-storage
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  clusterIP: None
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis

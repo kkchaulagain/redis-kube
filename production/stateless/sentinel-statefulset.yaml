@@ -19,7 +19,7 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              REDIS_PASSWORD=a-very-complex-password-here
+              REDIS_PASSWORD=a-bmdfai1n218!2
               nodes=redis-0.redis.redis.svc.cluster.local,redis-1.redis.redis.svc.cluster.local,redis-2.redis.redis.svc.cluster.local
 
               for i in ${nodes//,/ }
