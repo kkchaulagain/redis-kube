@@ -54,13 +54,13 @@ spec:
                 fi
               fi
               if [ "$(hostname)" = "redis-0" ]; then
-                echo "replica-announce-ip 157.230.65.136" >> /etc/redis/redis.conf
+                echo "replica-announce-ip 134.209.128.75" >> /etc/redis/redis.conf
               fi
               if [ "$(hostname)" = "redis-1" ]; then
-                echo "replica-announce-ip 164.90.252.241" >> /etc/redis/redis.conf
+                echo "replica-announce-ip 143.244.200.107" >> /etc/redis/redis.conf
               fi
               if [ "$(hostname)" = "redis-2" ]; then
-                echo "replica-announce-ip 178.128.135.222" >> /etc/redis/redis.conf
+                echo "replica-announce-ip 206.189.255.153" >> /etc/redis/redis.conf
               fi
               echo "loadmodule /usr/lib/redis/modules/redisearch.so" >> /etc/redis/redis.conf
           volumeMounts:
